@@ -1,92 +1,95 @@
-'use client';
-import { motion, useSpring, useTransform } from 'motion/react';
-import { useEffect } from 'react';
+'use client'
+import { useEffect, useRef } from 'react';
+import { useInView, useMotionValue, useSpring } from 'motion/react';
 
-import './Counter.css';
-
-function Number({ mv, number, height }) {
-  let y = useTransform(mv, latest => {
-    let placeValue = latest % 10;
-    let offset = (10 + number - placeValue) % 10;
-    let memo = offset * height;
-    if (offset > 5) {
-      memo -= 10 * height;
-    }
-    return memo;
-  });
-  return (
-    <motion.span className="counter-number" style={{ y }}>
-      {number}
-    </motion.span>
-  );
-}
-
-function Digit({ place, value, height, digitStyle }) {
-  let valueRoundedToPlace = Math.floor(value / place);
-  let animatedValue = useSpring(valueRoundedToPlace);
-  useEffect(() => {
-    animatedValue.set(valueRoundedToPlace);
-  }, [animatedValue, valueRoundedToPlace]);
-  return (
-    <div className="counter-digit" style={{ height, ...digitStyle }}>
-      {Array.from({ length: 10 }, (_, i) => (
-        <Number key={i} mv={animatedValue} number={i} height={height} />
-      ))}
-    </div>
-  );
-}
-
-export default function Counter({
-  value,
-  fontSize = 100,
-  padding = 0,
-  places = [10, 1],
-  gap = 8,
-  borderRadius = 4,
-  horizontalPadding = 8,
-  textColor = 'white',
-  fontWeight = 'bold',
-  containerStyle,
-  counterStyle,
-  digitStyle,
-  gradientHeight = 16,
-  gradientFrom = 'black',
-  gradientTo = 'transparent',
-  topGradientStyle,
-  bottomGradientStyle
+export default function CountUp({
+  to,
+  from = 0,
+  direction = 'up',
+  delay = 0,
+  duration = 2,
+  className = '',
+  startWhen = true,
+  separator = '',
+  onStart,
+  onEnd
 }) {
-  const height = fontSize + padding;
-  const defaultCounterStyle = {
-    fontSize,
-    gap: gap,
-    borderRadius: borderRadius,
-    paddingLeft: horizontalPadding,
-    paddingRight: horizontalPadding,
-    color: textColor,
-    fontWeight: fontWeight
+  const ref = useRef(null);
+  const motionValue = useMotionValue(direction === 'down' ? to : from);
+
+  const damping = 20 + 40 * (1 / duration);
+  const stiffness = 100 * (1 / duration);
+
+  const springValue = useSpring(motionValue, {
+    damping,
+    stiffness
+  });
+
+  const isInView = useInView(ref, { once: true, margin: '0px' });
+
+  const getDecimalPlaces = num => {
+    const str = num.toString();
+
+    if (str.includes('.')) {
+      const decimals = str.split('.')[1];
+
+      if (parseInt(decimals) !== 0) {
+        return decimals.length;
+      }
+    }
+
+    return 0;
   };
-  const defaultTopGradientStyle = {
-    height: gradientHeight,
-    background: `linear-gradient(to bottom, ${gradientFrom}, ${gradientTo})`
-  };
-  const defaultBottomGradientStyle = {
-    height: gradientHeight,
-    background: `linear-gradient(to top, ${gradientFrom}, ${gradientTo})`
-  };
-  return (
-    <div className="counter-container" style={containerStyle}>
-      <div className="counter-counter" style={{ ...defaultCounterStyle, ...counterStyle }}>
-        {places.map(place => (
-          <Digit key={place} place={place} value={value} height={height} digitStyle={digitStyle} />
-        ))}
-      </div>
-      <div className="gradient-container">
-        <div className="top-gradient" style={topGradientStyle ? topGradientStyle : defaultTopGradientStyle}></div>
-        <div
-          className="bottom-gradient"
-          style={bottomGradientStyle ? bottomGradientStyle : defaultBottomGradientStyle}
-        ></div>
-      </div>
-    </div>
-  );
+
+  const maxDecimals = Math.max(getDecimalPlaces(from), getDecimalPlaces(to));
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.textContent = String(direction === 'down' ? to : from);
+    }
+  }, [from, to, direction]);
+
+  useEffect(() => {
+    if (isInView && startWhen) {
+      if (typeof onStart === 'function') onStart();
+
+      const timeoutId = setTimeout(() => {
+        motionValue.set(direction === 'down' ? from : to);
+      }, delay * 1000);
+
+      const durationTimeoutId = setTimeout(
+        () => {
+          if (typeof onEnd === 'function') onEnd();
+        },
+        delay * 1000 + duration * 1000
+      );
+
+      return () => {
+        clearTimeout(timeoutId);
+        clearTimeout(durationTimeoutId);
+      };
+    }
+  }, [isInView, startWhen, motionValue, direction, from, to, delay, onStart, onEnd, duration]);
+
+  useEffect(() => {
+    const unsubscribe = springValue.on('change', latest => {
+      if (ref.current) {
+        const hasDecimals = maxDecimals > 0;
+
+        const options = {
+          useGrouping: !!separator,
+          minimumFractionDigits: hasDecimals ? maxDecimals : 0,
+          maximumFractionDigits: hasDecimals ? maxDecimals : 0
+        };
+
+        const formattedNumber = Intl.NumberFormat('en-US', options).format(latest);
+
+        ref.current.textContent = separator ? formattedNumber.replace(/,/g, separator) : formattedNumber;
+      }
+    });
+
+    return () => unsubscribe();
+  }, [springValue, separator, maxDecimals]);
+
+  return <span className={className} ref={ref} />;
 }

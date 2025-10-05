@@ -4,6 +4,8 @@ import CardNav from './components/Navigation/index.jsx';
 import CardSwap, { Card } from './components/Cards/index.jsx';
 import Image from 'next/image';
 import GlitchText from './components/GlitchText';
+import Usage from "./components/Usage"
+import Info from "./components/Info"
 export default function Home() {
   const NavItems = [
     {
@@ -110,6 +112,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <Usage/>
+      <Info/>
     </main>
   );
 }

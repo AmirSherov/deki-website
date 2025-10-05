@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -48,12 +48,14 @@
   padding: 0;
   user-select: none;
   -webkit-user-select: none;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  -webkit-transform: translateZ(10);
 }
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -83,6 +85,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --black: oklch(0.145 0 0);
 }
 
 .dark {
@@ -117,6 +122,7 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --black: oklch(0.985 0 0);
 }
 
 @layer base {
@@ -126,6 +132,13 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+main{
+  -webkit-user-select: none;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  -webkit-transform: translateZ(10);
 }
 /* Keep Cards section out of the Hero flow */
 .cards-section { position: relative; z-index: 5; }
@@ -137,6 +150,11 @@
   background: radial-gradient(1200px 600px at 80% 20%, rgba(108,92,231,0.08), transparent 60%), rgba(8,8,12,0.8);
   padding: 56px 56px;
   width: 100%;
+  -webkit-user-select: none;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  -webkit-transform: translateZ(10);
   margin: 0 auto;
 }
 .deki-cards-grid {

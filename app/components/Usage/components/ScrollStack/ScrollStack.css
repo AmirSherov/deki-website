@@ -1,0 +1,93 @@
+.scroll-stack-scroller {
+    position: relative;
+    width: 100%;
+    height: 60vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: scroll-position;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-padding-top: 30%;
+  }
+  
+  .scroll-stack-scroller::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scroll-stack-inner {
+    padding: 5vh 0 20vh;
+    min-height: 80vh;
+    position: relative;
+  }
+  
+  .scroll-stack-card-wrapper {
+    position: relative;
+  }
+  
+  .scroll-stack-card {
+    transform-origin: top center;
+    will-change: transform, filter;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
+    height: 22rem;
+    width: 100%;
+    margin: 28px 0;
+    padding: 2.2rem;
+    border-radius: 24px;
+    box-sizing: border-box;
+    background: rgb(0, 0, 0);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow:
+      0 10px 30px rgba(0,0,0,0.25),
+      inset 0 1px 0 rgba(255,255,255,0.06);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0) scale(1);
+    position: relative;
+    backdrop-filter: blur(14px) saturate(120%);
+    -webkit-backdrop-filter: blur(14px) saturate(120%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .scroll-stack-card:first-child {
+    opacity: 1;
+    transform: translateZ(0) scale(1) !important;
+  }
+  
+  .scroll-stack-end {
+    width: 100%;
+    height: 1px;
+  }
+  
+  .scroll-stack-card.stacked {
+    position: sticky;
+    top: 30%;
+  }
+  
+  @media (max-width: 768px) {
+    .scroll-stack-scroller {
+      height: 100%;
+    }
+    
+    .scroll-stack-inner {
+      padding: 3vh 0 30vh;
+      min-height: 80vh;
+    }
+    
+    .scroll-stack-card {
+      height: auto;
+      min-height: 16rem;
+      margin: 20px 0;
+      padding: 1.8rem;
+    }
+  }
+  

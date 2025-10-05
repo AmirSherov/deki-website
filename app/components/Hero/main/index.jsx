@@ -4,7 +4,7 @@ import Link from 'next/link';
 import FaultyTerminal from '../FaultyTerminal';
 import s from './index.module.scss';
 import GlitchText from '../../GlitchText/index.js';
-import Counter from '../Counter/index.js';
+import CountUp from '../Counter/index.js';
 import ElectronicBorder from '../ElectronicBroder/index.js';
 const stats = [
   { key: 'tracks', value: 50, label: 'ТРЕКОВ ВНУТРИ DEKI', places: [10, 1], suffix: 'K+' },
@@ -72,10 +72,10 @@ export default function Main() {
             <GlitchText speed={1} enableShadows enableOnHover={false} className="custom-class">
               Deki
             </GlitchText>
-              Музыкальный сервис внутри Telegram, созданный для живого общения и совместных эмоций.
+              Музыкальный сервис внутри Telegram, созданный для каждого
           </h5>
           <p className={s.description}>
-            Подбираем треки под настроение беседы, подключаем эксклюзивные премьеры и устраиваем прямые эфиры с артистами. Всё — не выходя из любимого мессенджера.
+            Подбираем треки под настроение беседы, подключаем эксклюзивные премьеры и устраиваем прямые эфиры с артистами. Всё — не выходя из любимого мессенджера
           </p>
           <div className={s.ctaRow}>
             <Link href="https://t.me/deki_music_bot?startapp" target="_blank" className={s.btnPrimary}>
@@ -94,17 +94,15 @@ export default function Main() {
                 <dt className={s.statLabel}>{item.label}</dt>
                 <dd className={s.statValue}>
                   <div className={s.statValueRow}>
-                    <Counter
-                      value={item.value}
-                      fontSize={44}
-                      padding={6}
-                      places={item.places}
-                      gap={10}
-                      borderRadius={10}
-                      textColor="#ffffff"
-                      gradientFrom="rgba(0,0,0,0.6)"
-                      gradientTo="rgba(0,0,0,0)"
-                    />
+
+<CountUp
+  from={0}
+  to={item.value}
+  separator=","
+  direction="up"
+  duration={1}
+  className="count-up-text"
+/>
                     {item.suffix && <span className={s.suffix}>{item.suffix}</span>}
                   </div>
                 </dd>
