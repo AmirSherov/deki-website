@@ -69,7 +69,7 @@ export default function Home() {
               </div>
               <div className="deki-cards-right">
                 <div className="relative" style={{ minHeight: 560 }}>
-                  <CardSwap width={600} height={420} cardDistance={80} verticalDistance={90} delay={5000} pauseOnHover={false}>
+                  <CardSwap width={600} height={420} cardDistance={80} verticalDistance={90} delay={5000} pauseOnHover={false} onCardClick={() => {}}>
                     <Card>
                       <div style={{ padding: 18 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, opacity: 0.9 }}>
