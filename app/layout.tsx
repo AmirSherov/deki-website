@@ -2,7 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://app.deki.com"),
+  metadataBase: new URL("https://app.deki.one"),
   title: {
     default: "Deki Music — Музыкальный сервис в Telegram",
     template: "%s • Deki Music",
@@ -23,18 +23,18 @@ export const metadata: Metadata = {
   publisher: "Deki Music",
   robots: { index: true, follow: true },
   alternates: {
-    canonical: "https://app.deki.com",
+    canonical: "https://app.deki.one",
   },
   openGraph: {
     type: "website",
-    url: "https://app.deki.com",
+    url: "https://app.deki.one",
     title: "Deki Music — Музыкальный сервис в Telegram",
     description:
       "Слушай любимые треки и эксклюзивы прямо в Telegram с Deki Music.",
     siteName: "Deki Music",
     images: [
       {
-        url: "https://app.deki.com/deki-logo.png",
+        url: "https://app.deki.one/deki-logo.png",
         width: 1200,
         height: 630,
         alt: "Deki Music Cover",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     title: "Deki Music — Музыкальный сервис в Telegram",
     description: "Плейлисты недели, эксклюзивы и треки по настроению.",
     creator: "@dekimusic",
-    images: ["https://app.deki.com/deki-logo.png"],
+    images: ["https://app.deki.one/deki-logo.png"],
   },
   icons: {
     icon: [
@@ -78,7 +78,7 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "MusicService",
               name: "Deki Music",
-              url: "https://app.deki.com",
+              url: "https://app.deki.one",
               description:
                 "Музыкальный сервис внутри Telegram. Плейлисты, эксклюзивы и треки по настроению.",
               sameAs: [
@@ -94,7 +94,7 @@ export default function RootLayout({
                 "@type": "ListenAction",
                 target: "https://t.me/deki_music_bot",
               },
-              image: "https://app.deki.com/deki-logo.png",
+              image: "https://app.deki.one/deki-logo.png",
             }),
           }}
         />

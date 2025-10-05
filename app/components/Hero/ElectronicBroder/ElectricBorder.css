@@ -5,6 +5,13 @@
   border-radius: inherit;
   overflow: visible;
   isolation: isolate;
+  
+  /* GPU оптимизации */
+  will-change: transform;
+  transform: translateZ(0);
+  contain: layout style paint;
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
 
 .eb-svg {
@@ -29,6 +36,11 @@
   border-radius: inherit;
   pointer-events: none;
   z-index: 2;
+  
+  /* GPU слой для анимаций */
+  will-change: transform;
+  transform: translateZ(0);
+  contain: strict;
 }
 
 .eb-stroke,
@@ -42,6 +54,11 @@
   border-radius: inherit;
   pointer-events: none;
   box-sizing: border-box;
+  
+  /* Принудительная GPU акселерация */
+  will-change: filter, transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .eb-stroke {
@@ -52,18 +69,24 @@
   border: var(--eb-border-width) solid oklch(from var(--electric-border-color) l c h / 0.6);
   opacity: 0.5;
   filter: blur(calc(0.5px + (var(--eb-border-width) * 0.25)));
+  /* Оптимизация blur для GPU */
+  filter: blur(calc(0.5px + (var(--eb-border-width) * 0.25))) brightness(1.01);
 }
 
 .eb-glow-2 {
   border: var(--eb-border-width) solid var(--electric-light-color);
   opacity: 0.5;
   filter: blur(calc(2px + (var(--eb-border-width) * 0.5)));
+  /* Оптимизация blur для GPU */
+  filter: blur(calc(2px + (var(--eb-border-width) * 0.5))) brightness(1.01);
 }
 
 .eb-background-glow {
   z-index: -1;
-  transform: scale(1.08);
-  filter: blur(32px);
+  transform: scale(1.08) translateZ(0);
+  filter: blur(32px) brightness(1.01);
   opacity: 0.3;
   background: linear-gradient(-30deg, var(--electric-light-color), transparent, var(--electric-border-color));
+  /* GPU композитинг */
+  will-change: transform, filter;
 }

@@ -37,6 +37,8 @@ uniform float uUseMouse;
 uniform float uPageLoadProgress;
 uniform float uUsePageLoadAnimation;
 uniform float uBrightness;
+uniform float uQuality;
+uniform float uSimplified;
 
 float time;
 
@@ -81,6 +83,14 @@ float fbm(vec2 p)
 }
 
 float pattern(vec2 p, out vec2 q, out vec2 r) {
+  if(uSimplified > 0.5) {
+    // Упрощённая версия для слабых устройств
+    q = vec2(0.5);
+    r = vec2(0.5);
+    float simplePattern = sin(p.x * 3.0 + time * 0.1) * cos(p.y * 3.0) * 0.5 + 0.5;
+    return simplePattern;
+  }
+  
   vec2 offset1 = vec2(1.0);
   vec2 offset0 = vec2(0.0);
   mat2 rot01 = rotate(0.1 * time);
@@ -96,7 +106,14 @@ float digit(vec2 p){
     vec2 s = floor(p * grid) / grid;
     p = p * grid;
     vec2 q, r;
-    float intensity = pattern(s * 0.1, q, r) * 1.3 - 0.03;
+    
+    float intensity;
+    if(uSimplified > 0.5) {
+      // Упрощённая интенсивность без сложных паттернов
+      intensity = sin(s.x * 5.0 + time * 0.2) * cos(s.y * 5.0) * 0.5 + 0.6;
+    } else {
+      intensity = pattern(s * 0.1, q, r) * 1.3 - 0.03;
+    }
     
     if(uUseMouse > 0.5){
         vec2 mouseWorld = uMouse * uScale;
@@ -143,15 +160,24 @@ float onOff(float a, float b, float c)
 
 float displace(vec2 look)
 {
+    if(uSimplified > 0.5) {
+      // Отключаем дисплейсмент на слабых устройствах
+      return 0.0;
+    }
     float y = look.y - mod(iTime * 0.25, 1.0);
     float window = 1.0 / (1.0 + 50.0 * y * y);
     return sin(look.y * 20.0 + iTime) * 0.0125 * onOff(4.0, 2.0, 0.8) * (1.0 + cos(iTime * 60.0)) * window;
 }
 
 vec3 getColor(vec2 p){
-    
-    float bar = step(mod(p.y + time * 20.0, 1.0), 0.2) * 0.4 + 1.0;
-    bar *= uScanlineIntensity;
+    float bar;
+    if(uSimplified > 0.5) {
+      // Упрощённые scanlines
+      bar = 1.0 + uScanlineIntensity * 0.2;
+    } else {
+      bar = step(mod(p.y + time * 20.0, 1.0), 0.2) * 0.4 + 1.0;
+      bar *= uScanlineIntensity;
+    }
     
     float displacement = displace(p);
     p.x += displacement;
@@ -163,10 +189,24 @@ vec3 getColor(vec2 p){
 
     float middle = digit(p);
     
-    const float off = 0.002;
-    float sum = digit(p + vec2(-off, -off)) + digit(p + vec2(0.0, -off)) + digit(p + vec2(off, -off)) +
-                digit(p + vec2(-off, 0.0)) + digit(p + vec2(0.0, 0.0)) + digit(p + vec2(off, 0.0)) +
-                digit(p + vec2(-off, off)) + digit(p + vec2(0.0, off)) + digit(p + vec2(off, off));
+    // Адаптивное размытие в зависимости от качества
+    float sum;
+    if(uQuality > 0.7) {
+      // Полное качество: 9 сэмплов
+      const float off = 0.002;
+      sum = digit(p + vec2(-off, -off)) + digit(p + vec2(0.0, -off)) + digit(p + vec2(off, -off)) +
+                  digit(p + vec2(-off, 0.0)) + digit(p + vec2(0.0, 0.0)) + digit(p + vec2(off, 0.0)) +
+                  digit(p + vec2(-off, off)) + digit(p + vec2(0.0, off)) + digit(p + vec2(off, off));
+    } else if(uQuality > 0.4) {
+      // Среднее качество: 5 сэмплов
+      const float off = 0.002;
+      sum = digit(p + vec2(-off, 0.0)) + digit(p + vec2(off, 0.0)) +
+                  digit(p + vec2(0.0, -off)) + digit(p + vec2(0.0, off)) +
+                  digit(p + vec2(0.0, 0.0)) * 5.0;
+    } else {
+      // Низкое качество: без размытия
+      sum = middle * 9.0;
+    }
     
     vec3 baseColor = vec3(0.9) * middle + sum * 0.1 * vec3(1.0) * bar;
     return baseColor;
@@ -238,10 +278,85 @@ export default function FaultyTerminal({
   dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 2,
   pageLoadAnimation = true,
   brightness = 1,
+  autoOptimize = true,
   className,
   style,
   ...rest
 }) {
+  // Определение мобильного устройства и размера экрана
+  const isMobile = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+           window.innerWidth < 768;
+  }, []);
+  
+  const screenSize = useMemo(() => {
+    if (typeof window === 'undefined') return 'large';
+    const width = window.innerWidth;
+    if (width < 480) return 'small';
+    if (width < 768) return 'medium';
+    return 'large';
+  }, []);
+  
+  // Автоматическая оптимизация параметров для мобильных устройств
+  const optimizedParams = useMemo(() => {
+    if (!autoOptimize) {
+      return {
+        dpr,
+        scale,
+        gridMul,
+        digitSize,
+        chromaticAberration,
+        curvature,
+        mouseReact,
+        quality: 1.0
+      };
+    }
+    
+    if (screenSize === 'small') {
+      // Телефоны: максимальная оптимизация
+      return {
+        dpr: 1,
+        scale: scale * 0.4,
+        gridMul: [gridMul[0] * 0.3, gridMul[1] * 0.3],
+        digitSize: digitSize * 0.7,
+        chromaticAberration: 0,
+        curvature: 0,
+        mouseReact: false,
+        quality: 0.2,
+        simplified: true,
+        targetFPS: 30
+      };
+    } else if (screenSize === 'medium') {
+      // Планшеты: средняя оптимизация
+      return {
+        dpr: 1,
+        scale: scale * 0.7,
+        gridMul: [gridMul[0] * 0.6, gridMul[1] * 0.6],
+        digitSize: digitSize * 0.85,
+        chromaticAberration: 0,
+        curvature: curvature * 0.5,
+        mouseReact: false,
+        quality: 0.5,
+        simplified: false,
+        targetFPS: 45
+      };
+    } else {
+      // Десктоп: полное качество
+      return {
+        dpr: Math.min(dpr, isMobile ? 1 : 2),
+        scale,
+        gridMul,
+        digitSize,
+        chromaticAberration,
+        curvature,
+        mouseReact,
+        quality: 1.0,
+        simplified: false,
+        targetFPS: 60
+      };
+    }
+  }, [autoOptimize, screenSize, isMobile, dpr, scale, gridMul, digitSize, chromaticAberration, curvature, mouseReact]);
   const containerRef = useRef(null);
   const programRef = useRef(null);
   const rendererRef = useRef(null);
@@ -251,6 +366,7 @@ export default function FaultyTerminal({
   const rafRef = useRef(0);
   const loadAnimationStartRef = useRef(0);
   const timeOffsetRef = useRef(Math.random() * 100);
+  const lastFrameTimeRef = useRef(0);
 
   const tintVec = useMemo(() => hexToRgb(tint), [tint]);
 
@@ -269,7 +385,7 @@ export default function FaultyTerminal({
     const ctn = containerRef.current;
     if (!ctn) return;
 
-    const renderer = new Renderer({ dpr });
+    const renderer = new Renderer({ dpr: optimizedParams.dpr });
     rendererRef.current = renderer;
     const gl = renderer.gl;
     gl.clearColor(0, 0, 0, 1);
@@ -284,26 +400,28 @@ export default function FaultyTerminal({
         iResolution: {
           value: new Color(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height)
         },
-        uScale: { value: scale },
+        uScale: { value: optimizedParams.scale },
 
-        uGridMul: { value: new Float32Array(gridMul) },
-        uDigitSize: { value: digitSize },
+        uGridMul: { value: new Float32Array(optimizedParams.gridMul) },
+        uDigitSize: { value: optimizedParams.digitSize },
         uScanlineIntensity: { value: scanlineIntensity },
         uGlitchAmount: { value: glitchAmount },
         uFlickerAmount: { value: flickerAmount },
         uNoiseAmp: { value: noiseAmp },
-        uChromaticAberration: { value: chromaticAberration },
+        uChromaticAberration: { value: optimizedParams.chromaticAberration },
         uDither: { value: ditherValue },
-        uCurvature: { value: curvature },
+        uCurvature: { value: optimizedParams.curvature },
         uTint: { value: new Color(tintVec[0], tintVec[1], tintVec[2]) },
         uMouse: {
           value: new Float32Array([smoothMouseRef.current.x, smoothMouseRef.current.y])
         },
         uMouseStrength: { value: mouseStrength },
-        uUseMouse: { value: mouseReact ? 1 : 0 },
+        uUseMouse: { value: optimizedParams.mouseReact ? 1 : 0 },
         uPageLoadProgress: { value: pageLoadAnimation ? 0 : 1 },
         uUsePageLoadAnimation: { value: pageLoadAnimation ? 1 : 0 },
-        uBrightness: { value: brightness }
+        uBrightness: { value: brightness },
+        uQuality: { value: optimizedParams.quality },
+        uSimplified: { value: optimizedParams.simplified ? 1 : 0 }
       }
     });
     programRef.current = program;
@@ -327,6 +445,15 @@ export default function FaultyTerminal({
     const update = t => {
       rafRef.current = requestAnimationFrame(update);
 
+      // FPS throttling для мобильных устройств
+      const targetFrameTime = 1000 / optimizedParams.targetFPS;
+      const deltaTime = t - lastFrameTimeRef.current;
+      
+      if (deltaTime < targetFrameTime) {
+        return; // Пропускаем кадр
+      }
+      lastFrameTimeRef.current = t;
+
       if (pageLoadAnimation && loadAnimationStartRef.current === 0) {
         loadAnimationStartRef.current = t;
       }
@@ -346,7 +473,7 @@ export default function FaultyTerminal({
         program.uniforms.uPageLoadProgress.value = progress;
       }
 
-      if (mouseReact) {
+      if (optimizedParams.mouseReact) {
         const dampingFactor = 0.08;
         const smoothMouse = smoothMouseRef.current;
         const mouse = mouseRef.current;
@@ -363,33 +490,27 @@ export default function FaultyTerminal({
     rafRef.current = requestAnimationFrame(update);
     ctn.appendChild(gl.canvas);
 
-    if (mouseReact) ctn.addEventListener('mousemove', handleMouseMove);
+    if (optimizedParams.mouseReact) ctn.addEventListener('mousemove', handleMouseMove);
 
     return () => {
       cancelAnimationFrame(rafRef.current);
       resizeObserver.disconnect();
-      if (mouseReact) ctn.removeEventListener('mousemove', handleMouseMove);
+      if (optimizedParams.mouseReact) ctn.removeEventListener('mousemove', handleMouseMove);
       if (gl.canvas.parentElement === ctn) ctn.removeChild(gl.canvas);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
       loadAnimationStartRef.current = 0;
       timeOffsetRef.current = Math.random() * 100;
     };
   }, [
-    dpr,
+    optimizedParams,
     pause,
     timeScale,
-    scale,
-    gridMul,
-    digitSize,
     scanlineIntensity,
     glitchAmount,
     flickerAmount,
     noiseAmp,
-    chromaticAberration,
     ditherValue,
-    curvature,
     tintVec,
-    mouseReact,
     mouseStrength,
     pageLoadAnimation,
     brightness,

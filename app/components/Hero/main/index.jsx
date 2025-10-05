@@ -1,4 +1,5 @@
 'use client';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import FaultyTerminal from '../FaultyTerminal';
 import s from './index.module.scss';
@@ -30,21 +31,37 @@ const highlights = [
 ];
 
 export default function Main() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                     window.innerWidth < 768;
+      setIsMobile(mobile);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   return (
     <section className={s.hero}>
       <div className={s.bg}>
-        <FaultyTerminal
-          className={s.terminal}
-          scale={4}
-          gridMul={[2.2, 1.6]}
-          digitSize={1.15}
-          timeScale={0.22}
-          glitchAmount={0.45}
-          chromaticAberration={0.01}
-          tint="#6c5ce7"
-          mouseReact={false}
-          brightness={1.3}
-        />
+        {!isMobile && (
+          <FaultyTerminal
+            className={s.terminal}
+            scale={0.5}
+            gridMul={[2.2, 1.6]}
+            digitSize={1.15}
+            timeScale={0.22}
+            glitchAmount={0.45}
+            chromaticAberration={0.01}
+            tint="#6c5ce7"
+            mouseReact={false}
+            brightness={1.3}
+          />
+        )}
         <div className={s.radial} />
         <div className={s.fade} />
       </div>
